@@ -40,17 +40,17 @@ def recuperer_notes(identifiant_utilisateur,type_media):
         nombre_de_pages = int(requests.get(
             'http://www.allocine.fr/' + identifiant_utilisateur + '/' + type_media + '/?page=999').url.rsplit('=', 1)[
                 1])
-    print("nombre_de_pages : " + str(nombre_de_pages))
+    print("Nombre de pages : " + str(nombre_de_pages))
     for i in range(1, nombre_de_pages + 1):
         url = 'http://www.allocine.fr/' + identifiant_utilisateur + '/' + type_media + '/?page=' + str(i)
         code_html = code_html + requests.get(url).text
 
     # Parsing de la page HTML entière
     recherche_html = BeautifulSoup(code_html, 'html.parser')
-
+    nombre_de_medias_trouves = 0
     # Création du fichier de sorite
     liste_notes = open("liste_notes_" + type_media + ".csv", "w")
-    liste_notes.write("Nom;Note" + os.linesep)
+    liste_notes.write("Nom;Note" + "\n")
     # Pour chaque film
     for balise_film in recherche_html.find_all("div", class_="card entity-card-simple userprofile-entity-card-simple"):
         # Récupérer le nom du film
@@ -60,9 +60,10 @@ def recuperer_notes(identifiant_utilisateur,type_media):
         # Extrait la note de la classe
         note_film_html = balise_film.find("div", {"class": expression_reguliere_class})['class'][1][1:]
         note_film = (note_film_html[:1] + ',' + note_film_html[1:])
-        liste_notes.write(nom_film + ";" + note_film + os.linesep)
+        liste_notes.write(nom_film + ";" + note_film + "\n")
+        nombre_de_medias_trouves = nombre_de_medias_trouves + 1
     liste_notes.close()
-    print("Fin de la récupération des notes pour le type de media " + type_media)
+    print("Fin de la récupération des notes, " + str(nombre_de_medias_trouves) + " " + type_media + " sauvegardés")
 
 recuperer_notes(identifiant_utilisateur,"films")
 recuperer_notes(identifiant_utilisateur, "series")

@@ -3,11 +3,6 @@ import sys
 import re
 import os
 
-# Vérification de la version de Python
-if sys.version_info < (3, 7):
-    print("La version de Python doit être supérieure à 3.7. Le programme ne peut pas continuer")
-    exit(0)
-
 # Vérification des bibliothèques nécessaires
 try:
     from bs4 import BeautifulSoup
@@ -18,6 +13,7 @@ except:
     os.system("pip3 install requests")
     from bs4 import BeautifulSoup
     from bs4 import requests
+
 
 
 def recuperer_notes(identifiant_utilisateur, type_media):
@@ -58,6 +54,11 @@ def recuperer_notes(identifiant_utilisateur, type_media):
 
 
 def main():
+    # Vérification de la version de Python
+    if sys.version_info < (3, 7):
+        print("La version de Python doit être supérieure à 3.7. Le programme ne peut pas continuer")
+        exit(0)
+
     # Vérification des paramètres
     if len(sys.argv) != 2:
         print("Aucun argument passé en pramètre")
@@ -74,7 +75,7 @@ def main():
     recuperer_notes(identifiant_utilisateur, "films")
     recuperer_notes(identifiant_utilisateur, "series")
     print("Les fichiers ont été sauvegardés dans le répertoire courant au format CSV")
-
+    exit(0)
 
 if __name__ == "__main__":
     main()

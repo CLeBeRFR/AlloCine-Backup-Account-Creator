@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import sys
 import re
 import os
+
 # Vérification de la version de Python
 if sys.version_info < (3, 7):
     print("La version de Python doit être supérieure à 3.7. Le programme ne peut pas continuer")
@@ -12,25 +14,13 @@ try:
     import requests
 except:
     print("Un ou plusieurs modules ne sont pas installés, l'installation va commencer")
-    os.system("pip install beautifulsoup4")
-    os.system("pip install requests")
+    os.system("pip3 install beautifulsoup4")
+    os.system("pip3 install requests")
     from bs4 import BeautifulSoup
     from bs4 import requests
 
-# Vérification des paramètres
-if len(sys.argv) != 2:
-    print("Aucun argument passé en pramètre")
-    print("Utilisation : python Allocine_Backup_Account_Creator.py <URL utilisateur>")
-    exit(0)
 
-# Récupération de l'identifiant utilisateur dans l'URL du profil
-identifiant_utilisateur = re.search('membre-([A-Z]|[0-9])*', sys.argv[1]).group(0)
-if "membre" not in identifiant_utilisateur:
-    print("L'identifiant utilisateur n'a pas pu être récupéré, vérifiez le paramètre passé")
-    print("Utilisation : python Allocine_Backup_Account_Creator.py <URL utilisateur>")
-    exit(0)
-
-def recuperer_notes(identifiant_utilisateur,type_media):
+def recuperer_notes(identifiant_utilisateur, type_media):
     print("Démarrage de la récupération des notes pour le type de média " + type_media)
     code_html = ""
     nombre_de_pages = 1
@@ -41,6 +31,7 @@ def recuperer_notes(identifiant_utilisateur,type_media):
             'http://www.allocine.fr/' + identifiant_utilisateur + '/' + type_media + '/?page=999').url.rsplit('=', 1)[
                 1])
     print("Nombre de pages : " + str(nombre_de_pages))
+    print("Extraction des pages, le processus peut être long...")
     for i in range(1, nombre_de_pages + 1):
         url = 'http://www.allocine.fr/' + identifiant_utilisateur + '/' + type_media + '/?page=' + str(i)
         code_html = code_html + requests.get(url).text
@@ -49,7 +40,7 @@ def recuperer_notes(identifiant_utilisateur,type_media):
     recherche_html = BeautifulSoup(code_html, 'html.parser')
     nombre_de_medias_trouves = 0
     # Création du fichier de sorite
-    liste_notes = open("liste_notes_" + type_media + ".csv", "w")
+    liste_notes = open("liste_notes_" + type_media + ".csv", "w", encoding="utf-8")
     liste_notes.write("Nom;Note" + "\n")
     # Pour chaque film
     for balise_film in recherche_html.find_all("div", class_="card entity-card-simple userprofile-entity-card-simple"):
@@ -65,5 +56,25 @@ def recuperer_notes(identifiant_utilisateur,type_media):
     liste_notes.close()
     print("Fin de la récupération des notes, " + str(nombre_de_medias_trouves) + " " + type_media + " sauvegardés")
 
-recuperer_notes(identifiant_utilisateur,"films")
-recuperer_notes(identifiant_utilisateur, "series")
+
+def main():
+    # Vérification des paramètres
+    if len(sys.argv) != 2:
+        print("Aucun argument passé en pramètre")
+        print("Utilisation : python Allocine_Backup_Account_Creator.py <URL utilisateur>")
+        exit(0)
+
+    # Récupération de l'identifiant utilisateur dans l'URL du profil
+    identifiant_utilisateur = re.search('membre-([A-Z]|[0-9])*', sys.argv[1]).group(0)
+    if "membre" not in identifiant_utilisateur:
+        print("L'identifiant utilisateur n'a pas pu être récupéré, vérifiez le paramètre passé")
+        print("Utilisation : python Allocine_Backup_Account_Creator.py <URL utilisateur>")
+        exit(0)
+
+    recuperer_notes(identifiant_utilisateur, "films")
+    recuperer_notes(identifiant_utilisateur, "series")
+    print("Les fichiers ont été sauvegardés dans le répertoire courant au format CSV")
+
+
+if __name__ == "__main__":
+    main()

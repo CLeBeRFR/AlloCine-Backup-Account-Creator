@@ -102,3 +102,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Ratings exported by the application
+liste_notes_*.csv

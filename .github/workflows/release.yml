@@ -1,0 +1,114 @@
+name: Release
+
+# Pushing a "v*" tag (e.g. v1.0.0) builds the executables and publishes a
+# GitHub release. A manual run only builds them, as workflow artifacts.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.os-name }}
+    strategy:
+      matrix:
+        include:
+          - os-name: Windows
+            runner: windows-latest
+            asset: AlloCine-Backup-windows.exe
+          # Oldest supported Ubuntu, so that the binary runs on distributions
+          # with an older glibc
+          - os-name: Linux
+            runner: ubuntu-22.04
+            asset: AlloCine-Backup-linux.tar.gz
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: pip install . pyinstaller
+
+      - name: Check that the tag matches the package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(python -c "import allocine_backup; print(allocine_backup.__version__)")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version $version"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -t .
+
+      - name: Build executable
+        run: >
+          pyinstaller --onefile --windowed --name AlloCine-Backup
+          --icon allocine_backup/assets/logo.ico
+          --collect-data allocine_backup
+          --collect-data customtkinter
+          allocine_backup/gui.py
+
+      # Fails if the window cannot start (missing module or data file)
+      - name: Smoke test (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y xvfb
+          xvfb-run -a bash -c '
+            ./dist/AlloCine-Backup & pid=$!
+            sleep 15
+            kill -0 "$pid" && kill "$pid"'
+
+      - name: Smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $process = Start-Process dist/AlloCine-Backup.exe -PassThru
+          Start-Sleep -Seconds 15
+          if ($process.HasExited) {
+            Write-Error "The application exited on startup"
+            exit 1
+          }
+          Stop-Process -Id $process.Id
+
+      # Archived to keep the executable bit
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: tar -czf ${{ matrix.asset }} -C dist AlloCine-Backup
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: mv dist/AlloCine-Backup.exe ${{ matrix.asset }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+
+  publish:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # Each artifact is downloaded into its own folder
+      - uses: actions/download-artifact@v8
+        with:
+          path: assets
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: assets/*/*
+          generate_release_notes: true

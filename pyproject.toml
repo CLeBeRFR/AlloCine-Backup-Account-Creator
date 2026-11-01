@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "allocine-backup"
+dynamic = ["version"]
+description = "Sauvegarde en CSV des notes de films et séries d'un profil AlloCiné"
+readme = "README.md"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = [
+    "beautifulsoup4>=4.12",
+    "customtkinter>=5.2",
+    "requests>=2.31",
+]
+
+[project.urls]
+Repository = "https://github.com/CLeBeRFR/AlloCine-Backup-Account-Creator"
+
+[project.scripts]
+allocine-backup = "allocine_backup.cli:main"
+
+[project.gui-scripts]
+allocine-backup-gui = "allocine_backup.gui:main"
+
+[tool.setuptools]
+packages = ["allocine_backup"]
+
+[tool.setuptools.dynamic]
+version = { attr = "allocine_backup.__version__" }
+
+[tool.setuptools.package-data]
+allocine_backup = ["assets/*"]

@@ -6,7 +6,8 @@ J'ai créé ce projet car AlloCiné ne permet pas d'extraire dans un format spé
 
 ## Comment l'utiliser ?
 L'installation de python en version 3.7 au minimum est nécessaire.<br />
-`Allocine_Backup_Account_Creator.py <URL du profil utilisateur>`<br />
+Installer les dépendances : `pip install -r requirements.txt`<br />
+Lancer le script : `python allocine_backup_account_creator.py <URL du profil utilisateur>`<br />
 Le script créera deux fichiers *liste_notes_films.csv* et *liste_notes_series.csv* qui contiennent le nom du film ou série et sa note associée.
 La sortie console sera du type :<br />
 ```python
